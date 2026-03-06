@@ -106,12 +106,26 @@
     </div>
   </main>
 
-  <!-- ═══ Modal overlay ═══ -->
+  <!-- ═══ Search modal overlay ═══ -->
   <div id="modal-overlay" class="hidden">
     <div class="modal-card">
       <div class="loader"></div>
       <p class="mt-4 text-base font-medium text-gray-100">Ведётся поиск</p>
       <p class="mt-1 text-xs text-gray-500" id="modal-status">Генерация ключевых слов…</p>
+    </div>
+  </div>
+
+  <!-- ═══ No results modal ═══ -->
+  <div id="no-results-overlay" class="hidden">
+    <div class="modal-card">
+      <svg class="w-10 h-10 text-gray-500 mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <p class="text-base font-medium text-gray-100">Публикаций на указанную тему не было</p>
+      <button id="no-results-close-btn"
+        class="mt-5 px-6 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 transition text-sm font-semibold">
+        Закрыть
+      </button>
     </div>
   </div>
 

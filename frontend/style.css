@@ -23,7 +23,19 @@
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
 }
-#modal-overlay.hidden { display: none; }
+#modal-overlay.hidden,
+#no-results-overlay.hidden { display: none; }
+
+#no-results-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
 
 .modal-card {
   display: flex;

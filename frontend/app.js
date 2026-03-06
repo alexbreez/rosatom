@@ -34,6 +34,8 @@ const emptyState = document.getElementById("empty-state");
 
 const modalOverlay = document.getElementById("modal-overlay");
 const modalStatus = document.getElementById("modal-status");
+const noResultsOverlay = document.getElementById("no-results-overlay");
+const noResultsCloseBtn = document.getElementById("no-results-close-btn");
 
 // ── Screen switching ────────────────────────────────────────────────────────
 
@@ -209,6 +211,12 @@ form.addEventListener("submit", async (e) => {
 
     closeModal();
 
+    // No articles → show "no results" modal, stay on form
+    if (!data.articles || data.articles.length === 0) {
+      noResultsOverlay.classList.remove("hidden");
+      return;
+    }
+
     // Switch to results screen
     if (data.brand_variants) renderBrandVariants(data.brand_variants);
     renderSynonyms(data.synonyms);
@@ -226,4 +234,8 @@ form.addEventListener("submit", async (e) => {
 
 backBtn.addEventListener("click", () => {
   showFormScreen();
+});
+
+noResultsCloseBtn.addEventListener("click", () => {
+  noResultsOverlay.classList.add("hidden");
 });
