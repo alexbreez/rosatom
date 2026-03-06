@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Media Monitor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="min-h-screen bg-gray-950 text-gray-100 flex flex-col items-center">
+
+  <!-- Header -->
+  <header class="w-full py-6 bg-gray-900 border-b border-gray-800 text-center">
+    <h1 class="text-2xl font-bold tracking-tight">
+      <span class="text-indigo-400">AI</span> Media Monitor
+    </h1>
+    <p class="text-sm text-gray-400 mt-1">
+      Monitor brand mentions across top news media — powered by AI
+    </p>
+  </header>
+
+  <!-- Main form -->
+  <main class="w-full max-w-2xl px-4 py-10">
+    <form id="search-form" class="space-y-5 bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-lg">
+
+      <!-- Topic -->
+      <div>
+        <label for="topic" class="block text-sm font-medium text-gray-300 mb-1">Search Topic</label>
+        <input
+          id="topic"
+          type="text"
+          placeholder="e.g. nuclear energy"
+          class="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-2.5 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+      </div>
+
+      <!-- Brand -->
+      <div>
+        <label for="brand" class="block text-sm font-medium text-gray-300 mb-1">Brand Name</label>
+        <input
+          id="brand"
+          type="text"
+          placeholder="e.g. Siemens"
+          class="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-2.5 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+      </div>
+
+      <!-- Country -->
+      <div>
+        <label for="country" class="block text-sm font-medium text-gray-300 mb-1">Country</label>
+        <select
+          id="country"
+          class="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-2.5 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="">— Select a country —</option>
+          <option value="Denmark">Denmark</option>
+          <option value="Germany">Germany</option>
+          <option value="Hungary">Hungary</option>
+        </select>
+      </div>
+
+      <!-- Submit -->
+      <button
+        type="submit"
+        id="start-btn"
+        class="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 transition font-semibold text-sm tracking-wide"
+      >
+        Start
+      </button>
+    </form>
+
+    <!-- Loading spinner -->
+    <div id="spinner" class="hidden mt-10 flex flex-col items-center gap-3">
+      <div class="loader"></div>
+      <p class="text-sm text-gray-400" id="status-text">Generating semantic cloud…</p>
+    </div>
+
+    <!-- Synonyms cloud -->
+    <div id="synonyms-section" class="hidden mt-8">
+      <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Generated Keywords</h2>
+      <div id="synonyms-cloud" class="flex flex-wrap gap-2"></div>
+    </div>
+
+    <!-- Results -->
+    <div id="results-section" class="hidden mt-8">
+      <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+        Results <span id="results-count" class="text-indigo-400"></span>
+      </h2>
+      <div id="results-list" class="space-y-3"></div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="empty-state" class="hidden mt-10 text-center text-gray-500 text-sm">
+      No articles found for this query. Try broadening your search topic.
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

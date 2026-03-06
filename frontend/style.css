@@ -1,0 +1,30 @@
+/* ── Spinner animation ─────────────────────────────────────────────────── */
+.loader {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(129, 140, 248, 0.2);   /* indigo-400 faded */
+  border-top-color: rgb(129, 140, 248);          /* indigo-400 */
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Smooth reveal for results ─────────────────────────────────────────── */
+#results-list a,
+#synonyms-cloud span {
+  animation: fadeUp 0.25s ease both;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
