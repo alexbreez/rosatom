@@ -14,7 +14,7 @@ from pydantic import BaseModel
 
 # Vercel adds the project root to sys.path, so absolute imports work.
 from lib.countries import get_country_config, get_supported_countries
-from lib.llm import generate_semantic_cloud, localize_brand
+from lib.llm import generate_semantic_cloud, localize_brand, summarize_articles
 from lib.search import search_media
 
 # ---------------------------------------------------------------------------
@@ -50,6 +50,8 @@ class SearchRequest(BaseModel):
 
 class ArticleResult(BaseModel):
     title: str
+    title_ru: str
+    summary_ru: str
     url: str
     date: str
     source: str
@@ -114,6 +116,13 @@ async def run_search(req: SearchRequest) -> SearchResponse:
             synonyms=synonyms,
             domains=domains,
         )
+
+        # Step 4 — translate titles & generate summaries in Russian
+        if articles:
+            articles = await summarize_articles(
+                articles=articles,
+                source_language=language_name,
+            )
     except Exception as exc:
         traceback.print_exc()
         raise HTTPException(

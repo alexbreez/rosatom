@@ -12,8 +12,33 @@
   to { transform: rotate(360deg); }
 }
 
-/* ── Smooth reveal for results ─────────────────────────────────────────── */
-#results-list a,
+/* ── Modal overlay ─────────────────────────────────────────────────────────── */
+#modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+#modal-overlay.hidden { display: none; }
+
+.modal-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #1a1a2e;
+  border: 1px solid #2d2d44;
+  border-radius: 1rem;
+  padding: 2.5rem 3rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  animation: fadeUp 0.25s ease both;
+}
+
+/* ── Smooth reveal for results ───────────────────────────────────────── */
+#results-list > div,
 #synonyms-cloud span {
   animation: fadeUp 0.25s ease both;
 }

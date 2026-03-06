@@ -1,23 +1,28 @@
 /**
  * AI Media Monitor — Frontend Logic
  *
- * Handles form validation, calls the backend API, manages loading states,
- * and renders results dynamically.
+ * Two-screen flow:
+ *   Screen 1: Form (topic, brand, country)
+ *   Screen 2: Results (translated titles, Russian summaries, links)
+ *
+ * A modal overlay with "Ведётся поиск" appears during the API call.
  */
 
 // ── Config ──────────────────────────────────────────────────────────────────
-// Point this to your deployed Vercel backend URL.
-// During local development, use "http://localhost:8000".
-const API_BASE = window.MEDIA_MONITOR_API_BASE || "https://media-monitoring-agent.vercel.app";
+const API_BASE =
+  window.MEDIA_MONITOR_API_BASE ||
+  "https://media-monitoring-agent.vercel.app";
 
 // ── DOM refs ────────────────────────────────────────────────────────────────
 const form = document.getElementById("search-form");
+const formScreen = document.getElementById("form-screen");
 const topicInput = document.getElementById("topic");
 const brandInput = document.getElementById("brand");
 const countrySelect = document.getElementById("country");
 const startBtn = document.getElementById("start-btn");
-const spinner = document.getElementById("spinner");
-const statusText = document.getElementById("status-text");
+
+const resultsScreen = document.getElementById("results-screen");
+const backBtn = document.getElementById("back-btn");
 const brandSection = document.getElementById("brand-section");
 const brandCloud = document.getElementById("brand-cloud");
 const synonymsSection = document.getElementById("synonyms-section");
@@ -27,42 +32,69 @@ const resultsCount = document.getElementById("results-count");
 const resultsList = document.getElementById("results-list");
 const emptyState = document.getElementById("empty-state");
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+const modalOverlay = document.getElementById("modal-overlay");
+const modalStatus = document.getElementById("modal-status");
 
-function hideAll() {
-  spinner.classList.add("hidden");
+// ── Screen switching ────────────────────────────────────────────────────────
+
+function showFormScreen() {
+  resultsScreen.classList.add("hidden");
+  formScreen.classList.remove("hidden");
+  // Reset results
   brandSection.classList.add("hidden");
   synonymsSection.classList.add("hidden");
   resultsSection.classList.add("hidden");
   emptyState.classList.add("hidden");
 }
 
-function showSpinner(message) {
-  hideAll();
-  statusText.textContent = message;
-  spinner.classList.remove("hidden");
+function showResultsScreen() {
+  formScreen.classList.add("hidden");
+  resultsScreen.classList.remove("hidden");
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
+
+// ── Modal ───────────────────────────────────────────────────────────────────
+
+function openModal(status) {
+  modalStatus.textContent = status || "Генерация ключевых слов…";
+  modalOverlay.classList.remove("hidden");
+}
+
+function updateModal(status) {
+  modalStatus.textContent = status;
+}
+
+function closeModal() {
+  modalOverlay.classList.add("hidden");
+}
+
+// ── Button state ────────────────────────────────────────────────────────────
 
 function setButtonLoading(loading) {
   startBtn.disabled = loading;
-  startBtn.textContent = loading ? "Running…" : "Start";
+  startBtn.textContent = loading ? "Поиск…" : "Start";
   startBtn.classList.toggle("opacity-60", loading);
   startBtn.classList.toggle("cursor-not-allowed", loading);
 }
 
-/**
- * Format an ISO date string to a readable locale format.
- */
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
 function formatDate(isoStr) {
   if (!isoStr) return "—";
   const d = new Date(isoStr);
-  return d.toLocaleDateString("en-GB", {
+  return d.toLocaleDateString("ru-RU", {
     day: "numeric",
     month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.appendChild(document.createTextNode(str || ""));
+  return div.innerHTML;
 }
 
 // ── Rendering ───────────────────────────────────────────────────────────────
@@ -102,35 +134,45 @@ function renderResults(articles) {
   resultsCount.textContent = `(${articles.length})`;
 
   articles.forEach((article) => {
-    const card = document.createElement("a");
-    card.href = article.url;
-    card.target = "_blank";
-    card.rel = "noopener noreferrer";
+    const card = document.createElement("div");
     card.className =
-      "block p-4 rounded-xl bg-gray-900 border border-gray-800 hover:border-indigo-600 transition";
+      "p-5 rounded-xl bg-gray-900 border border-gray-800 hover:border-indigo-600/50 transition";
 
     card.innerHTML = `
-      <p class="text-sm font-medium text-gray-100 leading-snug">${escapeHtml(article.title)}</p>
-      <div class="mt-2 flex items-center gap-3 text-xs text-gray-500">
-        <span>${escapeHtml(article.source)}</span>
-        <span>·</span>
-        <time>${formatDate(article.date)}</time>
+      <h3 class="text-sm font-semibold text-gray-100 leading-snug">
+        ${escapeHtml(article.title_ru || article.title)}
+      </h3>
+      ${
+        article.summary_ru
+          ? `<p class="mt-2 text-xs text-gray-400 leading-relaxed">${escapeHtml(article.summary_ru)}</p>`
+          : ""
+      }
+      <div class="mt-3 flex items-center justify-between">
+        <div class="flex items-center gap-3 text-xs text-gray-500">
+          <span>${escapeHtml(article.source)}</span>
+          <span>·</span>
+          <time>${formatDate(article.date)}</time>
+        </div>
+        <a href="${escapeHtml(article.url)}" target="_blank" rel="noopener noreferrer"
+           class="text-xs text-indigo-400 hover:text-indigo-300 transition flex items-center gap-1">
+          Читать
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+          </svg>
+        </a>
       </div>
+      ${
+        article.title !== (article.title_ru || article.title)
+          ? `<p class="mt-2 text-[11px] text-gray-600 italic">Оригинал: ${escapeHtml(article.title)}</p>`
+          : ""
+      }
     `;
 
     resultsList.appendChild(card);
   });
 
   resultsSection.classList.remove("hidden");
-}
-
-/**
- * Basic HTML escaping to avoid XSS when injecting user-sourced data.
- */
-function escapeHtml(str) {
-  const div = document.createElement("div");
-  div.appendChild(document.createTextNode(str));
-  return div.innerHTML;
 }
 
 // ── Form submit ─────────────────────────────────────────────────────────────
@@ -142,14 +184,13 @@ form.addEventListener("submit", async (e) => {
   const brand = brandInput.value.trim();
   const country = countrySelect.value;
 
-  // Validation
   if (!topic || !brand || !country) {
     alert("Заполните все поля");
     return;
   }
 
   setButtonLoading(true);
-  showSpinner("Generating semantic cloud…");
+  openModal("Генерация ключевых слов…");
 
   try {
     const res = await fetch(`${API_BASE}/api/search`, {
@@ -160,23 +201,29 @@ form.addEventListener("submit", async (e) => {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Server error (${res.status})`);
+      throw new Error(err.detail || `Ошибка сервера (${res.status})`);
     }
 
+    updateModal("Обработка результатов…");
     const data = await res.json();
 
-    // Show brand variants and synonyms
-    showSpinner("Fetching articles…");
+    closeModal();
+
+    // Switch to results screen
     if (data.brand_variants) renderBrandVariants(data.brand_variants);
     renderSynonyms(data.synonyms);
-
-    // Show articles
-    spinner.classList.add("hidden");
     renderResults(data.articles);
+    showResultsScreen();
   } catch (err) {
-    hideAll();
-    alert(`Error: ${err.message}`);
+    closeModal();
+    alert(`Ошибка: ${err.message}`);
   } finally {
     setButtonLoading(false);
   }
+});
+
+// ── Back button ─────────────────────────────────────────────────────────────
+
+backBtn.addEventListener("click", () => {
+  showFormScreen();
 });

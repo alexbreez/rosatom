@@ -109,3 +109,71 @@ async def localize_brand(
             seen.add(v_str.lower())
             result.append(v_str)
     return result or [brand]
+
+
+async def summarize_articles(
+    articles: list[dict], source_language: str
+) -> list[dict]:
+    """
+    For each article, produce a Russian translation of the title
+    and a 1-2 sentence summary in Russian.
+
+    Returns the same list with added `title_ru` and `summary_ru` keys.
+    """
+    if not articles:
+        return articles
+
+    # Build a batch prompt with all titles to minimize API calls
+    titles_block = "\n".join(
+        f"{i+1}. {a['title']}" for i, a in enumerate(articles)
+    )
+
+    prompt = (
+        f"Below are {len(articles)} news article titles in {source_language}.\n"
+        f"For each title, provide:\n"
+        f"  1) A Russian translation of the title\n"
+        f"  2) A brief 1-2 sentence summary in Russian of what the article is likely about\n\n"
+        f"Titles:\n{titles_block}\n\n"
+        f"Return ONLY a JSON array of objects, one per title, in order:\n"
+        f'[{{"title_ru": "...", "summary_ru": "..."}}, ...]\n'
+        f"No markdown, no explanations."
+    )
+
+    response = await client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are a helpful assistant that outputs only valid JSON arrays. "
+                    "No markdown fences, no extra text."
+                ),
+            },
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0.3,
+        max_tokens=3000,
+    )
+
+    raw = response.choices[0].message.content.strip()
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+
+    try:
+        translations = json.loads(raw)
+    except json.JSONDecodeError:
+        # Fallback: return articles without translations
+        for a in articles:
+            a["title_ru"] = a["title"]
+            a["summary_ru"] = ""
+        return articles
+
+    for i, a in enumerate(articles):
+        if i < len(translations):
+            a["title_ru"] = translations[i].get("title_ru", a["title"])
+            a["summary_ru"] = translations[i].get("summary_ru", "")
+        else:
+            a["title_ru"] = a["title"]
+            a["summary_ru"] = ""
+
+    return articles
