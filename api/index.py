@@ -5,12 +5,16 @@ Vercel's @vercel/python runtime natively supports FastAPI —
 just export `app`. No Mangum wrapper needed.
 """
 
+import asyncio
 import os
 import traceback
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+# Max articles to return (keeps LLM translation within Vercel timeout)
+MAX_ARTICLES = 15
 
 # Vercel adds the project root to sys.path, so absolute imports work.
 from lib.countries import get_country_config, get_supported_countries
@@ -98,16 +102,19 @@ async def run_search(req: SearchRequest) -> SearchResponse:
     domains = config["media_domains"]
 
     try:
-        # Step 2 — semantic cloud + brand localization (parallel)
-        synonyms = await generate_semantic_cloud(
+        # Step 2 — semantic cloud + brand localization (run in parallel)
+        synonyms_task = generate_semantic_cloud(
             topic=req.topic,
             language_name=language_name,
             language_code=language_code,
         )
-        brand_variants = await localize_brand(
+        brand_task = localize_brand(
             brand=req.brand,
             language_name=language_name,
             language_code=language_code,
+        )
+        synonyms, brand_variants = await asyncio.gather(
+            synonyms_task, brand_task
         )
 
         # Step 3 — search (using all brand name variants)
@@ -117,7 +124,8 @@ async def run_search(req: SearchRequest) -> SearchResponse:
             domains=domains,
         )
 
-        # Step 4 — translate titles & generate summaries in Russian
+        # Step 4 — keep top N, translate titles & summaries
+        articles = articles[:MAX_ARTICLES]
         if articles:
             articles = await summarize_articles(
                 articles=articles,
