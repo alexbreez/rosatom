@@ -1,21 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Media Monitor</title>
+  <title>AI Медиа Мониторинг</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="style.css?v=2" />
+  <link rel="stylesheet" href="style.css?v=3" />
 </head>
 <body class="min-h-screen bg-gray-950 text-gray-100 flex flex-col items-center">
 
   <!-- Header -->
   <header class="w-full py-6 bg-gray-900 border-b border-gray-800 text-center">
     <h1 class="text-2xl font-bold tracking-tight">
-      <span class="text-indigo-400">AI</span> Media Monitor
+      <span class="text-indigo-400">AI</span> Медиа Мониторинг
     </h1>
     <p class="text-sm text-gray-400 mt-1">
-      Monitor brand mentions across top news media — powered by AI
+      Мониторинг упоминаний бренда в ведущих СМИ — на базе ИИ
     </p>
   </header>
 
@@ -25,37 +25,37 @@
 
       <!-- Topic -->
       <div>
-        <label for="topic" class="block text-sm font-medium text-gray-300 mb-1">Search Topic</label>
+        <label for="topic" class="block text-sm font-medium text-gray-300 mb-1">Тема поиска</label>
         <input
           id="topic"
           type="text"
-          placeholder="e.g. nuclear energy"
+          placeholder="например, ядерная энергетика"
           class="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-2.5 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
       </div>
 
       <!-- Brand -->
       <div>
-        <label for="brand" class="block text-sm font-medium text-gray-300 mb-1">Brand Name</label>
+        <label for="brand" class="block text-sm font-medium text-gray-300 mb-1">Название бренда</label>
         <input
           id="brand"
           type="text"
-          placeholder="e.g. Siemens"
+          placeholder="например, Росатом"
           class="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-2.5 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
       </div>
 
       <!-- Country -->
       <div>
-        <label for="country" class="block text-sm font-medium text-gray-300 mb-1">Country</label>
+        <label for="country" class="block text-sm font-medium text-gray-300 mb-1">Страна</label>
         <select
           id="country"
           class="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-2.5 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
-          <option value="">— Select a country —</option>
-          <option value="Denmark">Denmark</option>
-          <option value="Germany">Germany</option>
-          <option value="Hungary">Hungary</option>
+          <option value="">— Выберите страну —</option>
+          <option value="Denmark">Дания</option>
+          <option value="Germany">Германия</option>
+          <option value="Hungary">Венгрия</option>
         </select>
       </div>
 
@@ -65,7 +65,7 @@
         id="start-btn"
         class="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 transition font-semibold text-sm tracking-wide"
       >
-        Start
+        Найти публикации
       </button>
     </form>
 
@@ -129,6 +129,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>

@@ -74,7 +74,7 @@ function closeModal() {
 
 function setButtonLoading(loading) {
   startBtn.disabled = loading;
-  startBtn.textContent = loading ? "Поиск…" : "Start";
+  startBtn.textContent = loading ? "Поиск…" : "Найти публикации";
   startBtn.classList.toggle("opacity-60", loading);
   startBtn.classList.toggle("cursor-not-allowed", loading);
 }
