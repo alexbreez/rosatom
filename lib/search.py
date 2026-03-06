@@ -88,13 +88,18 @@ async def search_media(
             }
 
             resp = await client.get(NEWSAPI_URL, params=params)
+            data = resp.json()
 
-            # If a batch fails (e.g. query too complex), log and continue
+            # Fatal errors (auth, rate limit) — raise immediately
+            if resp.status_code in (401, 403, 429):
+                code = data.get("code", "")
+                msg = data.get("message", resp.text[:200])
+                raise RuntimeError(f"NewsAPI [{code}]: {msg}")
+
+            # Non-fatal batch errors (e.g. query too complex) — skip batch
             if resp.status_code != 200:
                 print(f"NewsAPI error ({resp.status_code}): {resp.text[:200]}")
                 continue
-
-            data = resp.json()
 
             for article in data.get("articles", []):
                 url = article.get("url", "")
