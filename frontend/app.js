@@ -8,7 +8,7 @@
 // ── Config ──────────────────────────────────────────────────────────────────
 // Point this to your deployed Vercel backend URL.
 // During local development, use "http://localhost:8000".
-const API_BASE = window.MEDIA_MONITOR_API_BASE || "http://localhost:8000";
+const API_BASE = window.MEDIA_MONITOR_API_BASE || "https://media-monitoring-agent.vercel.app";
 
 // ── DOM refs ────────────────────────────────────────────────────────────────
 const form = document.getElementById("search-form");
