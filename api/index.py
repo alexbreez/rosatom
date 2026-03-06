@@ -1,6 +1,8 @@
-"""
-Main FastAPI application.
+"""Main FastAPI application.
 Deployed as a Vercel serverless function.
+
+Vercel's @vercel/python runtime natively supports FastAPI —
+just export `app`. No Mangum wrapper needed.
 """
 
 import os
@@ -8,12 +10,12 @@ import traceback
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from mangum import Mangum
 from pydantic import BaseModel
 
-from .countries import get_country_config, get_supported_countries
-from .llm import generate_semantic_cloud
-from .search import search_media
+# Vercel adds the project root to sys.path, so absolute imports work.
+from lib.countries import get_country_config, get_supported_countries
+from lib.llm import generate_semantic_cloud
+from lib.search import search_media
 
 # ---------------------------------------------------------------------------
 # App setup
@@ -119,7 +121,3 @@ async def run_search(req: SearchRequest) -> SearchResponse:
         language=language_name,
         articles=[ArticleResult(**a) for a in articles],
     )
-
-
-# Vercel serverless handler (wraps ASGI app for AWS Lambda compat layer)
-handler = Mangum(app, lifespan="off")

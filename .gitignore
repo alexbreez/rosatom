@@ -24,3 +24,4 @@ build/
 
 # Node (if using npm for any tooling)
 node_modules/
+.vercel
