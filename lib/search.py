@@ -20,12 +20,13 @@ NEWSAPI_URL = "https://newsapi.org/v2/everything"
 MAX_QUERY_LEN = 480
 
 
-def _build_query_batches(brand: str, synonyms: list[str]) -> list[str]:
+def _build_query_batches(brand_variants: list[str], synonyms: list[str]) -> list[str]:
     """
     Split synonyms into batches so each query stays under MAX_QUERY_LEN.
-    Each query looks like: "brand" AND ("syn1" OR "syn2" OR ...)
+    Query: ("Brand1" OR "Brand2") AND ("syn1" OR "syn2" OR ...)
     """
-    prefix = f'"{brand}" AND ('
+    brand_clause = " OR ".join(f'"{b}"' for b in brand_variants)
+    prefix = f'({brand_clause}) AND ('
     suffix = ")"
     overhead = len(prefix) + len(suffix)
 
@@ -53,7 +54,7 @@ def _build_query_batches(brand: str, synonyms: list[str]) -> list[str]:
 
 
 async def search_media(
-    brand: str,
+    brand_variants: list[str],
     synonyms: list[str],
     domains: list[str],
 ) -> list[dict]:
@@ -69,7 +70,7 @@ async def search_media(
     to_date = now.strftime("%Y-%m-%d")
 
     domains_str = ",".join(domains)
-    query_batches = _build_query_batches(brand, synonyms)
+    query_batches = _build_query_batches(brand_variants, synonyms)
 
     results: list[dict] = []
     seen_urls: set[str] = set()

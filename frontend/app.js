@@ -18,6 +18,8 @@ const countrySelect = document.getElementById("country");
 const startBtn = document.getElementById("start-btn");
 const spinner = document.getElementById("spinner");
 const statusText = document.getElementById("status-text");
+const brandSection = document.getElementById("brand-section");
+const brandCloud = document.getElementById("brand-cloud");
 const synonymsSection = document.getElementById("synonyms-section");
 const synonymsCloud = document.getElementById("synonyms-cloud");
 const resultsSection = document.getElementById("results-section");
@@ -29,6 +31,7 @@ const emptyState = document.getElementById("empty-state");
 
 function hideAll() {
   spinner.classList.add("hidden");
+  brandSection.classList.add("hidden");
   synonymsSection.classList.add("hidden");
   resultsSection.classList.add("hidden");
   emptyState.classList.add("hidden");
@@ -63,6 +66,18 @@ function formatDate(isoStr) {
 }
 
 // ── Rendering ───────────────────────────────────────────────────────────────
+
+function renderBrandVariants(variants) {
+  brandCloud.innerHTML = "";
+  variants.forEach((v) => {
+    const tag = document.createElement("span");
+    tag.className =
+      "inline-block px-3 py-1 text-xs rounded-full bg-emerald-900/50 text-emerald-300 border border-emerald-700/40";
+    tag.textContent = v;
+    brandCloud.appendChild(tag);
+  });
+  brandSection.classList.remove("hidden");
+}
 
 function renderSynonyms(synonyms) {
   synonymsCloud.innerHTML = "";
@@ -150,8 +165,9 @@ form.addEventListener("submit", async (e) => {
 
     const data = await res.json();
 
-    // Show synonyms
+    // Show brand variants and synonyms
     showSpinner("Fetching articles…");
+    if (data.brand_variants) renderBrandVariants(data.brand_variants);
     renderSynonyms(data.synonyms);
 
     // Show articles

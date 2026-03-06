@@ -14,7 +14,7 @@ from pydantic import BaseModel
 
 # Vercel adds the project root to sys.path, so absolute imports work.
 from lib.countries import get_country_config, get_supported_countries
-from lib.llm import generate_semantic_cloud
+from lib.llm import generate_semantic_cloud, localize_brand
 from lib.search import search_media
 
 # ---------------------------------------------------------------------------
@@ -57,6 +57,7 @@ class ArticleResult(BaseModel):
 
 class SearchResponse(BaseModel):
     synonyms: list[str]
+    brand_variants: list[str]
     language: str
     articles: list[ArticleResult]
 
@@ -95,16 +96,21 @@ async def run_search(req: SearchRequest) -> SearchResponse:
     domains = config["media_domains"]
 
     try:
-        # Step 2 — semantic cloud
+        # Step 2 — semantic cloud + brand localization (parallel)
         synonyms = await generate_semantic_cloud(
             topic=req.topic,
             language_name=language_name,
             language_code=language_code,
         )
-
-        # Step 3 — search
-        articles = await search_media(
+        brand_variants = await localize_brand(
             brand=req.brand,
+            language_name=language_name,
+            language_code=language_code,
+        )
+
+        # Step 3 — search (using all brand name variants)
+        articles = await search_media(
+            brand_variants=brand_variants,
             synonyms=synonyms,
             domains=domains,
         )
@@ -118,6 +124,7 @@ async def run_search(req: SearchRequest) -> SearchResponse:
     # Step 4 — return
     return SearchResponse(
         synonyms=synonyms,
+        brand_variants=brand_variants,
         language=language_name,
         articles=[ArticleResult(**a) for a in articles],
     )
