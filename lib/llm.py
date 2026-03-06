@@ -111,19 +111,13 @@ async def localize_brand(
     return result or [brand]
 
 
-async def summarize_articles(
+async def _translate_batch(
     articles: list[dict], source_language: str
 ) -> list[dict]:
     """
-    For each article, produce a Russian translation of the title
-    and a 1-2 sentence summary in Russian.
-
-    Returns the same list with added `title_ru` and `summary_ru` keys.
+    Translate a small batch of articles (up to 5) to Russian.
+    Returns the translated items as a list of dicts with title_ru/summary_ru.
     """
-    if not articles:
-        return articles
-
-    # Build a batch prompt with all titles to minimize API calls
     titles_block = "\n".join(
         f"{i+1}. {a['title']}" for i, a in enumerate(articles)
     )
@@ -131,12 +125,12 @@ async def summarize_articles(
     prompt = (
         f"Below are {len(articles)} news article titles in {source_language}.\n"
         f"For each title, provide:\n"
-        f"  1) A Russian translation of the title\n"
-        f"  2) A brief 1-2 sentence summary in Russian of what the article is likely about\n\n"
+        f"  1) title_ru — a Russian translation of the title\n"
+        f"  2) summary_ru — a brief 1-2 sentence summary in Russian\n\n"
         f"Titles:\n{titles_block}\n\n"
-        f"Return ONLY a JSON array of objects, one per title, in order:\n"
-        f'[{{"title_ru": "...", "summary_ru": "..."}}, ...]\n'
-        f"No markdown, no explanations."
+        f"Return ONLY a JSON array with exactly {len(articles)} objects in order.\n"
+        f'Format: [{{"title_ru": "...", "summary_ru": "..."}}, ...]\n'
+        f"No markdown fences, no explanations, no extra keys."
     )
 
     response = await client.chat.completions.create(
@@ -145,35 +139,76 @@ async def summarize_articles(
             {
                 "role": "system",
                 "content": (
-                    "You are a helpful assistant that outputs only valid JSON arrays. "
-                    "No markdown fences, no extra text."
+                    "You are a translator. Output ONLY a valid JSON array. "
+                    "No markdown, no commentary."
                 ),
             },
             {"role": "user", "content": prompt},
         ],
         temperature=0.3,
-        max_tokens=3000,
+        max_tokens=1500,
     )
 
     raw = response.choices[0].message.content.strip()
+    print(f"[translate_batch] raw LLM response ({len(articles)} articles): {raw[:300]}")
+
+    # Strip markdown fences if present
     if raw.startswith("```"):
         raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
 
-    try:
-        translations = json.loads(raw)
-    except json.JSONDecodeError:
-        # Fallback: return articles without translations
-        for a in articles:
-            a["title_ru"] = a["title"]
-            a["summary_ru"] = ""
+    translations = json.loads(raw)  # let it raise — caller handles
+    return translations
+
+
+async def summarize_articles(
+    articles: list[dict], source_language: str
+) -> list[dict]:
+    """
+    For each article, produce a Russian translation of the title
+    and a 1-2 sentence summary in Russian.
+
+    Processes in batches of 5 to avoid token-limit truncation.
+    Returns the same list with added `title_ru` and `summary_ru` keys.
+    """
+    if not articles:
         return articles
 
+    BATCH_SIZE = 5
+    batches = [
+        articles[i : i + BATCH_SIZE]
+        for i in range(0, len(articles), BATCH_SIZE)
+    ]
+
+    # Run all batches in parallel
+    import asyncio
+
+    async def process_batch(batch: list[dict]) -> list[dict]:
+        try:
+            return await _translate_batch(batch, source_language)
+        except Exception as exc:
+            print(f"[summarize_articles] batch translation failed: {exc}")
+            # Fallback for this batch
+            return [{"title_ru": a["title"], "summary_ru": ""} for a in batch]
+
+    results = await asyncio.gather(*[process_batch(b) for b in batches])
+
+    # Flatten and merge translations into articles
+    all_translations = []
+    for r in results:
+        all_translations.extend(r)
+
     for i, a in enumerate(articles):
-        if i < len(translations):
-            a["title_ru"] = translations[i].get("title_ru", a["title"])
-            a["summary_ru"] = translations[i].get("summary_ru", "")
+        if i < len(all_translations):
+            t = all_translations[i]
+            a["title_ru"] = t.get("title_ru", a["title"])
+            a["summary_ru"] = t.get("summary_ru", "")
         else:
             a["title_ru"] = a["title"]
             a["summary_ru"] = ""
+
+    translated_count = sum(
+        1 for a in articles if a["title_ru"] != a["title"]
+    )
+    print(f"[summarize_articles] {translated_count}/{len(articles)} titles translated")
 
     return articles
