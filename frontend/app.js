@@ -31,6 +31,7 @@ const resultsSection = document.getElementById("results-section");
 const resultsCount = document.getElementById("results-count");
 const resultsList = document.getElementById("results-list");
 const emptyState = document.getElementById("empty-state");
+const downloadBtn = document.getElementById("download-btn");
 
 const modalOverlay = document.getElementById("modal-overlay");
 const modalStatus = document.getElementById("modal-status");
@@ -177,6 +178,58 @@ function renderResults(articles) {
   resultsSection.classList.remove("hidden");
 }
 
+// ── Download as Markdown ────────────────────────────────────────────────────
+
+let lastSearchArticles = [];
+let lastSearchMeta = {};
+
+function buildMarkdown(articles, meta) {
+  const date = new Date().toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  let md = `# Результаты медиа-мониторинга\n`;
+  md += `**Тема:** ${meta.topic || "—"}  \n`;
+  md += `**Бренд:** ${meta.brand || "—"}  \n`;
+  md += `**Страна:** ${meta.country || "—"}  \n`;
+  md += `**Дата отчёта:** ${date}  \n`;
+  md += `**Найдено публикаций:** ${articles.length}\n\n`;
+  md += `---\n\n`;
+
+  articles.forEach((a, i) => {
+    md += `## ${i + 1}. ${a.title_ru || a.title}\n\n`;
+    if (a.summary_ru) {
+      md += `${a.summary_ru}\n\n`;
+    }
+    md += `- **Источник:** ${a.source}\n`;
+    md += `- **Дата:** ${formatDate(a.date)}\n`;
+    md += `- **Ссылка:** [${a.url}](${a.url})\n`;
+    if (a.title !== (a.title_ru || a.title)) {
+      md += `- **Оригинал заголовка:** ${a.title}\n`;
+    }
+    md += `\n`;
+  });
+
+  return md;
+}
+
+function downloadMarkdown() {
+  if (!lastSearchArticles.length) return;
+  const md = buildMarkdown(lastSearchArticles, lastSearchMeta);
+  const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `media-monitoring-${lastSearchMeta.brand || "report"}-${new Date().toISOString().slice(0, 10)}.md`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+downloadBtn.addEventListener("click", downloadMarkdown);
+
 // ── Form submit ─────────────────────────────────────────────────────────────
 
 form.addEventListener("submit", async (e) => {
@@ -216,6 +269,10 @@ form.addEventListener("submit", async (e) => {
       noResultsOverlay.classList.remove("hidden");
       return;
     }
+
+    // Store for download
+    lastSearchArticles = data.articles;
+    lastSearchMeta = { topic, brand, country: countrySelect.options[countrySelect.selectedIndex].text };
 
     // Switch to results screen
     if (data.brand_variants) renderBrandVariants(data.brand_variants);
